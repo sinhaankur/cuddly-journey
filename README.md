@@ -1,18 +1,40 @@
 # SignPortal License Server
 
-Self-hosted license + activation + auto-update server for **SignPortal Desktop**.
-Single Next.js process, SQLite-backed, deployable as one container.
+> **The single-process license backend for [SignPortal Desktop](https://github.com/sinhaankur/SignPortal).** Issue activation keys, bind them to machines with Ed25519-signed JWTs, enforce seat limits, serve auto-update manifests, and audit every action — all from one Next.js app with SQLite. Deploy as a container; scale to thousands of customers; never pay per-license fees.
 
-📄 **Site:** https://sinhaankur.github.io/cuddly-journey/
+[**🌐 Site →**](https://sinhaankur.github.io/cuddly-journey/) ·
+[**🐳 Image →**](https://github.com/sinhaankur/cuddly-journey/pkgs/container/cuddly-journey) ·
+[**📦 Releases →**](https://github.com/sinhaankur/cuddly-journey/releases)
 
-## What this gives you
+## Why this exists
 
-- **Issue activation keys** in the format `SP-XXXX-XXXX-XXXX-XXXX` with checksum
-- **Sign Ed25519 JWTs** that the desktop client verifies against an embedded pubkey
-- **Track seats** per license — hard cap, idempotent re-activation, admin-kick
+Paid desktop software needs a license backend. Off-the-shelf SaaS
+options (Keygen, Cryptolens, LemonSqueezy) charge per-license, lock you
+to their cloud, and rule out air-gapped enterprise deploys. This is the
+opposite: a small, self-hosted server you fully own — designed
+specifically for the SignPortal Desktop activation flow but generic
+enough to drive any Tauri or Electron client that wants Ed25519 JWT
+licensing.
+
+One Next.js process. SQLite by default, Postgres-ready. ~80 MB
+container. Hosts thousands of customers on a hobby-tier VM.
+
+## What it gives you
+
+- **Activation keys** in the format `SP-XXXX-XXXX-XXXX-XXXX` with a
+  built-in checksum so typos surface client-side
+- **Ed25519-signed JWTs** that the desktop client verifies against an
+  embedded public key — a leaked server can't issue tokens for a
+  different signer
+- **Per-license seat limits** with idempotent re-activation, machine-
+  fingerprint binding, and admin-kick to free seats remotely
+- **Heartbeat-driven revocation** with a 14-day soft expiry so a kill
+  switch reaches every running install within hours
 - **Tauri 2 auto-updater feed** at `/api/updates/desktop/{target}/{current}`
-- **Append-only audit log** of every issuance, activation, heartbeat, revocation
-- **Admin web UI** for issuing / monitoring / revoking — bcrypt + session cookies
+  for shipping signed releases to active fleets
+- **Append-only audit log** of every issuance, activation, heartbeat,
+  revocation, and admin action — bcrypt + httpOnly session cookies on
+  the admin UI
 
 ## Quickstart
 

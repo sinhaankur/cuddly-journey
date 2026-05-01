@@ -1,7 +1,7 @@
 {
   "name": "signportal-license-server",
   "version": "0.1.0",
-  "description": "License + activation + auto-update server for SignPortal Desktop. Issues activation keys, signs Ed25519 JWTs, manages seat counts, serves Tauri updater manifests, exposes an admin UI.",
+  "description": "Self-hosted license backend for paid desktop software. Issues activation keys, binds them to machines via Ed25519-signed JWTs, enforces per-license seat limits, serves Tauri auto-updater manifests, and audits every action — all in one Next.js process with SQLite. Deployable as a single container; no per-license SaaS fees.",
   "private": true,
   "scripts": {
     "dev": "next dev",
