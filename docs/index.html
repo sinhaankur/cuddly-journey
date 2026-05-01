@@ -3,8 +3,12 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>SignPortal License Server</title>
-<meta name="description" content="Self-hosted license + activation + auto-update server for SignPortal Desktop. Issues activation keys, signs Ed25519 JWTs, manages seats." />
+<title>SignPortal License Server — self-hosted licensing for paid desktop software</title>
+<meta name="description" content="Issue activation keys, bind them to machines with Ed25519 JWTs, enforce seat limits, ship signed updates, audit every action. One Next.js process. SQLite-backed. No per-license SaaS fees." />
+<meta property="og:title" content="SignPortal License Server" />
+<meta property="og:description" content="Self-hosted license backend for paid desktop software. Activation keys, seat enforcement, signed updates, audit log — one process, $0 per license." />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f1115'/%3E%3Ctext x='50' y='66' font-family='ui-monospace,monospace' font-size='44' font-weight='700' fill='%23fafafc' text-anchor='middle'%3ESP%3C/text%3E%3C/svg%3E" />
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -141,16 +145,16 @@ section{padding:88px 0}
 <main>
   <section class="hero">
     <div class="wrap">
-      <div class="hero-eyebrow">SignPortal Desktop · Phase 4 · Self-hosted</div>
-      <h1>Activation keys, seat tracking, and signed updates — <em>all under one process.</em></h1>
+      <div class="hero-eyebrow">Self-hosted · Open-source · Tauri-native</div>
+      <h1>The licensing backend you actually own. <em>One process. $0 per license.</em></h1>
       <p class="hero-lede">
-        A self-hosted license server for SignPortal Desktop. Issues
-        activation keys, signs Ed25519 JWTs, tracks seats per machine,
-        serves Tauri auto-updater manifests, and gives admins a clean
-        web UI for the whole thing.
+        Issue activation keys, bind them to machines with Ed25519-signed
+        JWTs, enforce per-license seat limits, ship signed auto-updates,
+        and audit every action — all from one Next.js app with SQLite.
+        No per-key SaaS fees, no vendor lock, no surprise rate limits.
       </p>
       <div class="hero-cta">
-        <a href="#start" class="btn btn-primary">Get started →</a>
+        <a href="#start" class="btn btn-primary">Get started in 5 min →</a>
         <a href="https://github.com/sinhaankur/cuddly-journey" target="_blank" rel="noopener" class="btn btn-secondary">View on GitHub</a>
       </div>
     </div>
@@ -201,13 +205,14 @@ section{padding:88px 0}
 
   <section id="what">
     <div class="wrap">
-      <div class="section-eyebrow">What it is</div>
-      <h2 class="section-title">Production-grade licensing for paid desktop software.</h2>
+      <div class="section-eyebrow">Why this exists</div>
+      <h2 class="section-title">SaaS license servers cost more than the licenses they're protecting.</h2>
       <p class="section-lede">
-        Built for SignPortal Desktop's specific shape — Tauri, JWT-based
-        activation, fingerprint binding — but the model is generic.
-        Single Next.js process, SQLite-backed, deploys to Render / Fly /
-        Vercel in one click.
+        Keygen starts at $79/mo for 50 keys. Cryptolens at $35/mo. LemonSqueezy
+        takes 5% of every transaction. None let you self-host without
+        upgrading to enterprise pricing. This is the answer when you're
+        ready to own your activation flow — built first for SignPortal
+        Desktop, generic enough for any Tauri or Electron client.
       </p>
       <div class="features">
         <div class="feature">

@@ -1,0 +1,125 @@
+# On `v*` tag push:
+#   1. Build the Docker image with the tag's version + `latest`
+#   2. Push to GitHub Container Registry (ghcr.io/sinhaankur/cuddly-journey)
+#   3. Create a GitHub Release with auto-generated notes
+#
+# Pull the image after release with:
+#   docker pull ghcr.io/sinhaankur/cuddly-journey:v0.1.0
+#
+# Manual trigger via the Actions tab is also available for re-runs.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Version tag (e.g., v0.1.0)'
+        required: true
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  docker:
+    name: Build & push Docker image
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-') }}
+
+      - name: Build & push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  github-release:
+    name: Publish GitHub Release
+    needs: docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "name=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.name }}
+          name: ${{ steps.tag.outputs.name }}
+          draft: false
+          prerelease: ${{ contains(steps.tag.outputs.name, 'alpha') || contains(steps.tag.outputs.name, 'beta') || contains(steps.tag.outputs.name, 'rc') }}
+          generate_release_notes: true
+          body: |
+            ## Docker image
+
+            ```bash
+            docker pull ghcr.io/sinhaankur/cuddly-journey:${{ steps.tag.outputs.name }}
+            ```
+
+            Multi-arch: linux/amd64 + linux/arm64.
+
+            ## Quick deploy
+
+            ```bash
+            docker run -d \
+              -p 3000:3000 \
+              -v /var/lib/signportal:/app/data \
+              -e LICENSE_PRIVATE_KEY="$(cat license-signing.pem)" \
+              -e LICENSE_PUBLIC_KEY="$(cat license-signing.pub.pem)" \
+              ghcr.io/sinhaankur/cuddly-journey:${{ steps.tag.outputs.name }}
+            ```
+
+            See [`docs/DEPLOYMENT.md`](https://github.com/sinhaankur/cuddly-journey/blob/main/docs/DEPLOYMENT.md) for Render / Fly / bare-VM recipes.
+
+            ## What's in this release
+
+            Auto-generated changelog from commits below. The hand-curated changelog lives in [`CHANGELOG.md`](https://github.com/sinhaankur/cuddly-journey/blob/main/CHANGELOG.md).
