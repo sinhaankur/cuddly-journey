@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>SignPortal License Server</title>
+<meta name="description" content="Self-hosted license + activation + auto-update server for SignPortal Desktop. Issues activation keys, signs Ed25519 JWTs, manages seats." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f1115'/%3E%3Ctext x='50' y='66' font-family='ui-monospace,monospace' font-size='44' font-weight='700' fill='%23fafafc' text-anchor='middle'%3ESP%3C/text%3E%3C/svg%3E" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;color:#0f1115;background:#fafafc;line-height:1.55}
+body{min-height:100vh}
+a{color:inherit;text-decoration:none}
+code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.wrap{max-width:1100px;margin:0 auto;padding:0 24px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:8px;font-weight:600;font-size:14px;transition:opacity .15s,background .15s}
+.btn-primary{background:#0f1115;color:#fafafc}
+.btn-primary:hover{opacity:.9}
+.btn-secondary{border:1px solid #e4e6eb;color:#0f1115;background:#fff}
+.btn-secondary:hover{background:#f4f4f6}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;background:rgba(15,17,21,.06)}
+
+/* Header */
+.hdr{position:sticky;top:0;background:rgba(250,250,252,.85);backdrop-filter:blur(12px);border-bottom:1px solid #e4e6eb;z-index:10}
+.hdr-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+.brand{display:inline-flex;align-items:center;gap:10px;font-weight:700}
+.brand-logo{width:28px;height:28px;border-radius:6px;background:#0f1115;color:#fafafc;display:inline-flex;align-items:center;justify-content:center;font-family:ui-monospace,monospace;font-size:12px;font-weight:700}
+.nav{display:flex;align-items:center;gap:6px}
+.nav a{padding:6px 12px;border-radius:6px;font-size:14px;color:#646973}
+.nav a:hover{background:rgba(15,17,21,.06);color:#0f1115}
+
+/* Hero */
+.hero{padding:96px 0 80px}
+.hero-eyebrow{font-family:ui-monospace,monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#646973;margin-bottom:18px}
+.hero h1{font-size:54px;line-height:1.05;font-weight:700;letter-spacing:-.02em;max-width:780px}
+.hero h1 em{font-style:normal;color:#646973}
+.hero-lede{font-size:19px;color:#646973;max-width:640px;margin-top:20px}
+.hero-cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px}
+
+/* Bento grid */
+.bento{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;margin-top:80px}
+.bento-card{background:#fff;border:1px solid #e4e6eb;border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:8px}
+.bento-card.dark{background:#0f1115;color:#fafafc;border-color:#0f1115}
+.bento-card h3{font-size:15px;font-weight:600;letter-spacing:-.005em}
+.bento-card .desc{font-size:13px;color:#646973;line-height:1.5;margin-top:auto}
+.bento-card.dark .desc{color:rgba(250,250,252,.7)}
+.bento-card .demo{font-family:ui-monospace,monospace;font-size:12px;background:#fafafc;border:1px solid #e4e6eb;border-radius:6px;padding:8px 10px;margin-top:8px;color:#646973;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bento-card.dark .demo{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1);color:rgba(250,250,252,.6)}
+.bc-1{grid-column:span 7;min-height:240px}
+.bc-2{grid-column:span 5}
+.bc-3{grid-column:span 4}
+.bc-4{grid-column:span 4}
+.bc-5{grid-column:span 4}
+.bc-6{grid-column:span 6}
+.bc-7{grid-column:span 6}
+
+/* Section */
+section{padding:88px 0}
+.section-eyebrow{font-family:ui-monospace,monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#646973;margin-bottom:14px}
+.section-title{font-size:34px;font-weight:700;letter-spacing:-.015em;max-width:700px}
+.section-lede{font-size:17px;color:#646973;margin-top:14px;max-width:640px}
+
+/* Architecture diagram */
+.arch{display:grid;grid-template-columns:1fr;gap:14px;margin-top:48px}
+.arch-row{background:#fff;border:1px solid #e4e6eb;border-radius:12px;padding:20px}
+.arch-row.dark{background:#0f1115;color:#fafafc;border-color:#0f1115}
+.arch-row h4{font-size:14px;font-weight:600;margin-bottom:6px}
+.arch-row .who{font-family:ui-monospace,monospace;font-size:11px;color:#646973;letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px}
+.arch-row.dark .who{color:rgba(250,250,252,.6)}
+.arch-row p{font-size:13px;color:#646973;line-height:1.55}
+.arch-row.dark p{color:rgba(250,250,252,.7)}
+.arch-arrow{text-align:center;color:#646973;font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:4px 0}
+
+/* Feature list (Why) */
+.features{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:48px}
+.feature{background:#fff;border:1px solid #e4e6eb;border-radius:12px;padding:24px}
+.feature-icon{font-family:ui-monospace,monospace;font-size:11px;color:#22c55e;background:rgba(34,197,94,.1);width:fit-content;padding:3px 8px;border-radius:4px;margin-bottom:12px;letter-spacing:.05em;text-transform:uppercase;font-weight:600}
+.feature h3{font-size:16px;font-weight:600;margin-bottom:8px;letter-spacing:-.005em}
+.feature p{font-size:13px;color:#646973;line-height:1.55}
+
+/* API table */
+.endpoints{margin-top:48px;background:#fff;border:1px solid #e4e6eb;border-radius:12px;overflow:hidden}
+.endpoint{display:grid;grid-template-columns:80px 1fr 2fr;gap:0;padding:16px 24px;border-bottom:1px solid #e4e6eb;align-items:center}
+.endpoint:last-child{border-bottom:0}
+.endpoint .verb{font-family:ui-monospace,monospace;font-size:11px;font-weight:700;letter-spacing:.05em;color:#22c55e}
+.endpoint .verb.del{color:#dc2626}
+.endpoint .verb.patch{color:#f59e0b}
+.endpoint .path{font-family:ui-monospace,monospace;font-size:13px;color:#0f1115}
+.endpoint .what{font-size:13px;color:#646973}
+
+/* Quickstart */
+.quick{margin-top:48px;background:#0f1115;color:#fafafc;border-radius:12px;padding:32px;font-family:ui-monospace,monospace;font-size:13px;line-height:1.7;overflow-x:auto}
+.quick .cm{color:#22c55e}
+.quick .cmt{color:rgba(250,250,252,.45)}
+
+/* Compare table */
+.compare{margin-top:48px;border:1px solid #e4e6eb;border-radius:12px;overflow:hidden;background:#fff}
+.compare table{width:100%;border-collapse:collapse;font-size:14px}
+.compare th{text-align:left;padding:14px 20px;background:#fafafc;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#646973;border-bottom:1px solid #e4e6eb}
+.compare td{padding:14px 20px;border-bottom:1px solid #e4e6eb;vertical-align:top}
+.compare tr:last-child td{border-bottom:0}
+.compare .yes{color:#22c55e;font-weight:600}
+.compare .no{color:#dc2626}
+.compare .meh{color:#f59e0b}
+
+/* Footer */
+.ftr{border-top:1px solid #e4e6eb;padding:48px 0 64px;color:#646973;font-size:13px}
+.ftr-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:24px}
+.ftr a{color:#0f1115}
+.ftr a:hover{text-decoration:underline}
+
+@media (max-width:760px){
+  .hero{padding:48px 0 40px}
+  .hero h1{font-size:36px}
+  .bento{grid-template-columns:1fr;gap:10px}
+  .bc-1,.bc-2,.bc-3,.bc-4,.bc-5,.bc-6,.bc-7{grid-column:1/-1}
+  section{padding:56px 0}
+  .section-title{font-size:26px}
+  .features{grid-template-columns:1fr}
+  .endpoint{grid-template-columns:1fr;gap:6px}
+  .compare table{font-size:12px}
+  .compare th,.compare td{padding:10px}
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="wrap hdr-row">
+    <a href="#" class="brand"><span class="brand-logo">SP</span> License Server</a>
+    <nav class="nav">
+      <a href="#what">What</a>
+      <a href="#how">How</a>
+      <a href="#api">API</a>
+      <a href="#start">Quickstart</a>
+      <a href="https://github.com/sinhaankur/cuddly-journey" target="_blank" rel="noopener">GitHub →</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-eyebrow">SignPortal Desktop · Phase 4 · Self-hosted</div>
+      <h1>Activation keys, seat tracking, and signed updates — <em>all under one process.</em></h1>
+      <p class="hero-lede">
+        A self-hosted license server for SignPortal Desktop. Issues
+        activation keys, signs Ed25519 JWTs, tracks seats per machine,
+        serves Tauri auto-updater manifests, and gives admins a clean
+        web UI for the whole thing.
+      </p>
+      <div class="hero-cta">
+        <a href="#start" class="btn btn-primary">Get started →</a>
+        <a href="https://github.com/sinhaankur/cuddly-journey" target="_blank" rel="noopener" class="btn btn-secondary">View on GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="bento">
+        <div class="bento-card bc-1 dark">
+          <span class="pill" style="background:rgba(34,197,94,.15);color:#22c55e">Activation</span>
+          <h3>Bind a key to a single machine</h3>
+          <p class="desc">SP-XXXX-XXXX-XXXX-XXXX format with checksum. Server hashes on store, verifies on activation, returns a 14-day Ed25519-signed JWT bound to the device fingerprint.</p>
+          <div class="demo">SP-A2BC-K9PQ-7XHM-RTYW</div>
+        </div>
+        <div class="bento-card bc-2">
+          <span class="pill">Seats</span>
+          <h3>Hard-cap with kick</h3>
+          <p class="desc">Per-license seat limit. Idempotent re-activation from the same fingerprint. Admin can kick a seat to free it for someone else.</p>
+        </div>
+        <div class="bento-card bc-3">
+          <span class="pill">Heartbeat</span>
+          <h3>6-hour soft expiry</h3>
+          <p class="desc">Token slides forward 14 days on every heartbeat. Offline grace until soft expiry; then re-activate.</p>
+        </div>
+        <div class="bento-card bc-4">
+          <span class="pill">Updates</span>
+          <h3>Tauri manifest endpoint</h3>
+          <p class="desc">Drop-in feed for the Tauri 2 updater. Stable + beta channels, critical-priority flag, signed bundles.</p>
+        </div>
+        <div class="bento-card bc-5">
+          <span class="pill">Audit</span>
+          <h3>Append-only log</h3>
+          <p class="desc">Every activation, heartbeat, revoke, and admin action recorded with timestamp and actor. No deletions.</p>
+        </div>
+        <div class="bento-card bc-6">
+          <span class="pill">Admin UI</span>
+          <h3>Issue, monitor, revoke</h3>
+          <p class="desc">Single page per license: seats, heartbeats, audit trail, kick / revoke actions. Bcrypt-hashed admins, session cookies.</p>
+        </div>
+        <div class="bento-card bc-7 dark">
+          <span class="pill" style="background:rgba(245,158,11,.15);color:#f59e0b">Crypto</span>
+          <h3>Ed25519, not symmetric secrets</h3>
+          <p class="desc">Server signs with the private key; desktop client verifies with the embedded public key. A leaked server can't issue tokens for a different signer.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="what">
+    <div class="wrap">
+      <div class="section-eyebrow">What it is</div>
+      <h2 class="section-title">Production-grade licensing for paid desktop software.</h2>
+      <p class="section-lede">
+        Built for SignPortal Desktop's specific shape — Tauri, JWT-based
+        activation, fingerprint binding — but the model is generic.
+        Single Next.js process, SQLite-backed, deploys to Render / Fly /
+        Vercel in one click.
+      </p>
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">No vendor lock-in</div>
+          <h3>You own the keys</h3>
+          <p>The Ed25519 signing keypair lives on your server. Migrate the SQLite database to Postgres any time — every query goes through one helper. The desktop client is yours to point anywhere.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">No per-license fees</div>
+          <h3>Flat-cost hosting</h3>
+          <p>SaaS license servers charge $79+/mo for 50 keys. This is one Next.js process behind one container. Render hobby tier covers thousands of customers.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">Air-gappable</div>
+          <h3>Self-host anywhere</h3>
+          <p>Customers paying enterprise prices want on-prem. The server runs entirely behind your firewall — only the desktop clients need network access, and even that is bounded by the heartbeat cadence.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">Tamper-evident</div>
+          <h3>Hash-chained audit</h3>
+          <p>Every license-affecting event is recorded append-only. Admins, customers, and auditors all see the same chain of activations, heartbeats, and revocations. Compliance teams love it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how" style="background:#fff;border-top:1px solid #e4e6eb;border-bottom:1px solid #e4e6eb">
+    <div class="wrap">
+      <div class="section-eyebrow">How it works</div>
+      <h2 class="section-title">Three layers, one trust boundary at the JWT.</h2>
+      <p class="section-lede">
+        The desktop client never sees plaintext private keys. The
+        license server never sees a user's machine fingerprint until
+        activation. Cryptographic signature is the only thing that
+        crosses between them.
+      </p>
+      <div class="arch">
+        <div class="arch-row">
+          <div class="who">Layer 1 — Desktop client (Tauri 2)</div>
+          <h4>Activation gate locks until a valid key is entered</h4>
+          <p>Computes a SHA-256 fingerprint of the machine UID. Sends activation_key + fingerprint + platform to the server. Stores the returned JWT in the OS keychain (macOS Keychain / Windows DPAPI / Linux libsecret). Verifies signatures with the embedded Ed25519 public key.</p>
+        </div>
+        <div class="arch-arrow">↓ POST /api/licenses/activate ↓</div>
+        <div class="arch-row dark">
+          <div class="who">Layer 2 — License server (this project)</div>
+          <h4>Validates key, claims seat, signs JWT</h4>
+          <p>Hashes the key, looks up the license, checks revocation + expiry + seat count. Records the seat with the machine fingerprint. Issues a 14-day Ed25519 JWT with the license id, plan, fingerprint, and license expiry baked in. Logs the activation to the audit table.</p>
+        </div>
+        <div class="arch-arrow">↓ Returns { token: "eyJhbGciOi..." } ↓</div>
+        <div class="arch-row">
+          <div class="who">Layer 3 — Tauri 2 client (verification)</div>
+          <h4>Verifies token, unlocks the app</h4>
+          <p>Verifies the JWT signature with the embedded pubkey. Confirms the fingerprint claim matches this device. Caches the token. Calls heartbeat every 6 hours to refresh; falls back to a 14-day grace if the server is unreachable.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="api">
+    <div class="wrap">
+      <div class="section-eyebrow">REST API</div>
+      <h2 class="section-title">Six public endpoints. Six admin endpoints.</h2>
+      <p class="section-lede">All JSON. Bcrypt-hashed admin sessions. Ed25519-signed activation JWTs. SQLite-backed.</p>
+
+      <div class="endpoints">
+        <div class="endpoint"><span class="verb">POST</span><span class="path">/api/licenses/activate</span><span class="what">Claim a seat, return a 14-day JWT bound to fingerprint.</span></div>
+        <div class="endpoint"><span class="verb">POST</span><span class="path">/api/licenses/heartbeat</span><span class="what">Refresh the token, surface remote revocation.</span></div>
+        <div class="endpoint"><span class="verb">POST</span><span class="path">/api/licenses/deactivate</span><span class="what">Free a seat. Used at uninstall or when moving machines.</span></div>
+        <div class="endpoint"><span class="verb">GET</span><span class="path">/api/updates/desktop/&#123;target&#125;/&#123;current&#125;</span><span class="what">Tauri 2 updater feed. 204 if up to date, signed manifest otherwise.</span></div>
+        <div class="endpoint"><span class="verb">POST</span><span class="path">/api/admin/login</span><span class="what">Bcrypt verify, set httpOnly cookie session.</span></div>
+        <div class="endpoint"><span class="verb">POST</span><span class="path">/api/admin/licenses</span><span class="what">Issue a new license. Returns the raw key — once.</span></div>
+        <div class="endpoint"><span class="verb patch">PATCH</span><span class="path">/api/admin/licenses/&#123;id&#125;</span><span class="what">Revoke, change seat limit, edit notes, extend expiry.</span></div>
+        <div class="endpoint"><span class="verb del">DELETE</span><span class="path">/api/admin/licenses/&#123;id&#125;/seats</span><span class="what">Kick a specific seat by fingerprint. User can re-activate.</span></div>
+        <div class="endpoint"><span class="verb">GET</span><span class="path">/api/admin/audit</span><span class="what">Full audit log. Last 200 events with actor + details.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="start" style="background:#fff;border-top:1px solid #e4e6eb">
+    <div class="wrap">
+      <div class="section-eyebrow">Quickstart</div>
+      <h2 class="section-title">Three commands to a running license server.</h2>
+      <p class="section-lede">SQLite ships in the binary. Ed25519 keypair generates on first run. Admin user seeds via prompt or env.</p>
+      <pre class="quick">
+<span class="cmt"># 1. Install</span>
+<span class="cm">git clone https://github.com/sinhaankur/cuddly-journey.git
+cd cuddly-journey
+npm install</span>
+
+<span class="cmt"># 2. Initialise database, generate signing keys, seed an admin user</span>
+<span class="cm">npm run db:init</span>
+<span class="cmt"># Prompts for admin email + password. Prints the public key —
+# paste it into the Tauri client's SIGNPORTAL_LICENSE_PUBKEY_PEM build secret.</span>
+
+<span class="cmt"># 3. Run</span>
+<span class="cm">npm run dev   # http://localhost:3000 — admin UI</span>
+
+<span class="cmt"># Production: docker build, deploy to Render / Fly / your own box.
+# Single Next.js standalone build, SQLite WAL, ~80MB image.</span>
+      </pre>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-eyebrow">vs. the alternatives</div>
+      <h2 class="section-title">Compared to Keygen, LemonSqueezy, Cryptolens.</h2>
+      <p class="section-lede">Trade-offs are honest — sometimes self-hosting is wrong. Read the table.</p>
+      <div class="compare">
+        <table>
+          <thead>
+            <tr><th>Capability</th><th>This project</th><th>Keygen.sh</th><th>LemonSqueezy</th><th>Cryptolens</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Cost at 50 active licenses</td>
+              <td class="yes">$0 + hosting</td>
+              <td class="meh">$79/mo</td>
+              <td class="meh">5% of revenue</td>
+              <td class="meh">$35/mo</td>
+            </tr>
+            <tr>
+              <td>Self-hosted / air-gapped</td>
+              <td class="yes">Yes</td>
+              <td class="meh">Enterprise tier only</td>
+              <td class="no">No (SaaS)</td>
+              <td class="meh">"Air gap" addon</td>
+            </tr>
+            <tr>
+              <td>JWT-based activation tokens</td>
+              <td class="yes">Yes (Ed25519)</td>
+              <td class="yes">Yes</td>
+              <td class="meh">License key only</td>
+              <td class="yes">Yes</td>
+            </tr>
+            <tr>
+              <td>Stripe billing built in</td>
+              <td class="no">No (build it yourself)</td>
+              <td class="yes">Yes</td>
+              <td class="yes">Yes (it's the product)</td>
+              <td class="meh">Manual setup</td>
+            </tr>
+            <tr>
+              <td>Migration cost off-platform</td>
+              <td class="yes">N/A — it's yours</td>
+              <td class="meh">Re-issue keys</td>
+              <td class="no">Vendor lock</td>
+              <td class="meh">Re-issue keys</td>
+            </tr>
+            <tr>
+              <td>Time to first key issued</td>
+              <td>5 min</td>
+              <td>5 min</td>
+              <td>10 min</td>
+              <td>30 min</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:13px;color:#646973;margin-top:24px;max-width:640px">
+        <strong>Build this</strong> when control of the keypair, on-prem deployment, or per-license cost matters. <strong>Buy a service</strong> when Stripe billing + tax compliance + abandoned-cart emails are the real bottleneck.
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer class="ftr">
+  <div class="wrap ftr-row">
+    <div>
+      <div class="brand" style="margin-bottom:8px"><span class="brand-logo">SP</span> License Server</div>
+      <p>Open-source license + activation server for SignPortal Desktop.</p>
+    </div>
+    <div>
+      <p><strong>Repository</strong></p>
+      <p style="margin-top:4px"><a href="https://github.com/sinhaankur/cuddly-journey">github.com/sinhaankur/cuddly-journey</a></p>
+    </div>
+    <div>
+      <p><strong>Pairs with</strong></p>
+      <p style="margin-top:4px"><a href="https://github.com/sinhaankur/SignPortal">SignPortal</a> · <a href="https://github.com/sinhaankur/SignPortal/tree/main/Desktop%20Application">Desktop Application</a></p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
